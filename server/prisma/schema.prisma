@@ -1,0 +1,57 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  googleId     String   @unique
+  email        String   @unique
+  name         String?
+  picture      String?
+  accessToken  String?
+  refreshToken String?
+  createdAt    DateTime @default(now())
+
+  tasks Task[]
+}
+
+model Task {
+  id             String    @id @default(cuid())
+  userId         String
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name           String
+  type           TaskType  // TASK | EVENT | BIRTHDAY
+  description    String?
+
+  date           DateTime
+  time           String?   // "14:30" — stored as string for flexibility
+  isRecurring    Boolean   @default(false)
+
+  isFinished     Boolean   @default(false)
+  finishedAt     DateTime?
+
+  // Google Calendar
+  googleEventId  String?
+
+  // Birthday-specific
+  birthdayPerson String?
+  reminderDays   Int?      // days before to send reminder
+
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([isFinished])
+}
+
+enum TaskType {
+  TASK
+  EVENT
+  BIRTHDAY
+}
