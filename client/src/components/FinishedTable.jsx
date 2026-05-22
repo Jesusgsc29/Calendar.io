@@ -34,7 +34,7 @@ export default function FinishedTable({ tasks }) {
                   </td>
                   <td className="py-3 text-gray-400">
                     {new Date(task.date).toLocaleDateString('en-US', {
-                      month: 'short', day: 'numeric', year: 'numeric'
+                      month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC'
                     })}
                   </td>
                   <td className="py-3 text-gray-400">

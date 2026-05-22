@@ -13,11 +13,20 @@ router.use(requireAuth);
 // GET /tasks — get all tasks for logged-in user
 router.get('/', async (req, res) => {
   try {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
+    // Build today's date range in UTC to match how Prisma stores dates
+    const now = new Date();
+    const today = new Date(Date.UTC(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      0, 0, 0, 0
+    ));
+    const tomorrow = new Date(Date.UTC(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate() + 1,
+      0, 0, 0, 0
+    ));
 
     const tasks = await prisma.task.findMany({
       where: {
