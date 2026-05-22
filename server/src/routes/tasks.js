@@ -1,5 +1,6 @@
 import express from 'express';
 import { prisma } from '../index.js';
+import cron from 'node-cron';
 import { requireAuth } from '../middleware/auth.js';
 import {
   createCalendarEvent,
@@ -139,5 +140,17 @@ router.delete('/:id', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// Runs every day at midnight
+cron.schedule('0 0 * * *', async () => {
+    try {
+      await prisma.task.deleteMany({
+        where: { isFinished: true },
+      });
+      console.log('Finished tasks cleared');
+    } catch (err) {
+      console.error('Cron error:', err.message);
+    }
+  });
 
 export default router;
