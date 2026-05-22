@@ -12,6 +12,8 @@ import './config/passport.js';
 export const prisma = new PrismaClient();
 const app = express();
 
+app.set('trust proxy', 1);
+
 app.use(cors({
   origin: process.env.FRONTEND_URL,
   credentials: true,
@@ -26,6 +28,7 @@ app.use(session({
   cookie: {
     secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   },
 }));
