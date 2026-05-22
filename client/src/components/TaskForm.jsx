@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createTask } from '../api/tasks';
 
 const defaultForm = {
@@ -17,10 +17,19 @@ export default function TaskForm({ onTaskAdded }) {
   const [form, setForm] = useState(defaultForm);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [notification, setNotification] = useState('');
 
   function set(field, value) {
     setForm(prev => ({ ...prev, [field]: value }));
   }
+
+  // Auto-dismiss after 4 seconds — add this below the useState declarations
+  useEffect(() => {
+    if (!notification) return;
+    const timer = setTimeout(() => setNotification(''), 4000);
+    return () => clearTimeout(timer);
+  }, [notification]);
+
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -40,8 +49,16 @@ export default function TaskForm({ onTaskAdded }) {
       };
 
       const task = await createTask(payload);
+
+    if (form.type === 'BIRTHDAY') {
+      // Don't add to task list, just show notification
+      setNotification(`🎂 ${form.birthdayPerson}'s birthday was added to Google Calendar!`);
+    } else {
       onTaskAdded(task);
-      setForm(defaultForm);
+    }
+
+    setForm(defaultForm);
+
     } catch (err) {
       setError(err.response?.data?.error || 'Something went wrong');
     } finally {
@@ -200,6 +217,19 @@ export default function TaskForm({ onTaskAdded }) {
       )}
 
       {error && <p className="text-red-500 text-sm">{error}</p>}
+
+      {notification && (
+        <div className="flex items-center gap-2 bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg px-4 py-3">
+        <span>{notification}</span>
+        <button
+          type="button"
+          onClick={() => setNotification('')}
+          className="ml-auto text-green-500 hover:text-green-700"
+        >
+          ✕
+        </button>
+        </div>
+      )}
 
       <button
         type="submit"

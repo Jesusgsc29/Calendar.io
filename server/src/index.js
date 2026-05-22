@@ -46,9 +46,15 @@ app.get('/me', (req, res) => {
 cron.schedule('0 0 * * *', async () => {
   try {
     await prisma.task.deleteMany({
-      where: { isFinished: true },
+      where: {
+        userId: { not: undefined },
+        OR: [
+          { isFinished: true },          // all finished tasks
+          { isRecurring: false, type: 'TASK' }, // non-recurring active tasks
+        ],
+      },
     });
-    console.log('Finished tasks cleared');
+    console.log('Daily task reset complete');
   } catch (err) {
     console.error('Cron error:', err.message);
   }
