@@ -47,6 +47,7 @@ router.post('/', async (req, res) => {
     });
 
     // Sync to Google Calendar
+    if (type === 'EVENT' || type === 'BIRTHDAY') {
     try {
       const googleEventId = await createCalendarEvent(req.user, task);
       const updatedTask = await prisma.task.update({
@@ -59,6 +60,11 @@ router.post('/', async (req, res) => {
       console.error('Calendar sync error:', calendarErr.message);
       return res.status(201).json({ ...task, calendarError: 'Could not sync to Google Calendar' });
     }
+    }
+
+    // TASKs skip Calendar and return immediately
+    return res.status(201).json(task);
+
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -96,7 +102,7 @@ router.patch('/:id', async (req, res) => {
     });
 
     // Sync update to Google Calendar
-    if (existing.googleEventId) {
+    if (existing.googleEventId && existing.type !== 'TASK') {
       try {
         await updateCalendarEvent(req.user, existing.googleEventId, updated);
       } catch (calendarErr) {
