@@ -1,6 +1,5 @@
 import express from 'express';
 import { prisma } from '../index.js';
-import cron from 'node-cron';
 import { requireAuth } from '../middleware/auth.js';
 import {
   createCalendarEvent,
@@ -14,10 +13,31 @@ router.use(requireAuth);
 // GET /tasks — get all tasks for logged-in user
 router.get('/', async (req, res) => {
   try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
     const tasks = await prisma.task.findMany({
-      where: { userId: req.user.id },
+      where: {
+        userId: req.user.id,
+        NOT: { type: 'BIRTHDAY' }, // never show birthdays in the table
+        OR: [
+          { type: 'TASK' },        // tasks always show
+          {
+            type: 'EVENT',         // events only show on their day
+            date: {
+              gte: today,
+              lt: tomorrow,
+            },
+          },
+        ],
+      },
       orderBy: [{ isFinished: 'asc' }, { date: 'asc' }],
     });
+
+
     res.json(tasks);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -140,17 +160,5 @@ router.delete('/:id', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
-// Runs every day at midnight
-cron.schedule('0 0 * * *', async () => {
-    try {
-      await prisma.task.deleteMany({
-        where: { isFinished: true },
-      });
-      console.log('Finished tasks cleared');
-    } catch (err) {
-      console.error('Cron error:', err.message);
-    }
-  });
 
 export default router;

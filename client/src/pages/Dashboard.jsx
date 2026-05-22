@@ -24,6 +24,22 @@ export default function Dashboard() {
     load();
   }, []);
 
+  useEffect(() => {
+    // Calculate ms until next midnight
+    const now = new Date();
+    const midnight = new Date();
+    midnight.setHours(24, 0, 0, 0);
+    const msUntilMidnight = midnight - now;
+  
+    // Reload task list at midnight
+    const timeout = setTimeout(async () => {
+      const taskList = await fetchTasks();
+      setTasks(taskList);
+    }, msUntilMidnight);
+  
+    return () => clearTimeout(timeout);
+  }, []);
+
   function handleTaskAdded(task) {
     setTasks(prev => [task, ...prev]);
   }

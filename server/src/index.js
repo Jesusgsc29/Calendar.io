@@ -4,7 +4,7 @@ import session from 'express-session';
 import cors from 'cors';
 import passport from 'passport';
 import { PrismaClient } from '@prisma/client';
-
+import cron from 'node-cron';
 import authRoutes from './routes/auth.js';
 import taskRoutes from './routes/tasks.js';
 import './config/passport.js';
@@ -40,6 +40,18 @@ app.use('/tasks', taskRoutes);
 app.get('/me', (req, res) => {
   if (!req.user) return res.status(401).json({ error: 'Not authenticated' });
   res.json(req.user);
+});
+
+// Runs every day at midnight
+cron.schedule('0 0 * * *', async () => {
+  try {
+    await prisma.task.deleteMany({
+      where: { isFinished: true },
+    });
+    console.log('Finished tasks cleared');
+  } catch (err) {
+    console.error('Cron error:', err.message);
+  }
 });
 
 const PORT = process.env.PORT || 4000;
