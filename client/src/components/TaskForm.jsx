@@ -50,12 +50,22 @@ export default function TaskForm({ onTaskAdded }) {
 
       const task = await createTask(payload);
 
-    if (form.type === 'BIRTHDAY') {
-      // Don't add to task list, just show notification
-      setNotification(`🎂 ${form.birthdayPerson}'s birthday was added to Google Calendar!`);
-    } else {
-      onTaskAdded(task);
-    }
+      if (form.type === 'BIRTHDAY') {
+        setNotification(`🎂 ${form.birthdayPerson}'s birthday was added to Google Calendar!`);
+      } else if (form.type === 'EVENT') {
+        // Only add to task list if the event is today
+        const eventDate = new Date(form.date + 'T00:00:00');
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+      
+        if (eventDate.getTime() === today.getTime()) {
+          onTaskAdded(task);
+        } else {
+          setNotification(`📅 "${form.name}" was added to Google Calendar for ${new Date(form.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}!`);
+        }
+      } else {
+        onTaskAdded(task);
+      }
 
     setForm(defaultForm);
 
